@@ -5,7 +5,7 @@ variable "region" {
 
 variable "repo" {
   type    = string
-  default = "tconuorah/terraform-gitops-deploy"
+  default = "tconuorah/enterprise-level-infra-gitops"
 } # ORG/REPO
 
 variable "tags" {
