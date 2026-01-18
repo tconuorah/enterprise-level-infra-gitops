@@ -1,11 +1,24 @@
 name: terraform-destroy
 
 on:
-  push:
-    branches: [dev, staging, main]
-    paths:
-      - "infra/**"
-
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to destroy (dev | staging | prod)"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      stack:
+        description: "Stack to destroy"
+        required: true
+        type: choice
+        options:
+          - networking
+          - platform
+          
 permissions:
   id-token: write
   contents: read
