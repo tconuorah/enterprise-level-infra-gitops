@@ -3,28 +3,41 @@ name: terraform-destroy
 on:
   workflow_dispatch:
     inputs:
-      env:
-        description: "Environment to destroy"
-        type: choice
+      environment:
+        description: "Environment to destroy (dev | staging | prod)"
         required: true
-        options: [dev, staging, prod]
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
       stack:
         description: "Stack to destroy"
-        type: choice
         required: true
-        options: [platform, networking]
+        type: choice
+        options:
+          - networking
+          - platform
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  destroy:
+  apply:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.env }}
+
+    # Current branch decides environment (dev/staging/main->prod)
+    environment: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: [networking, platform]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -38,13 +51,13 @@ jobs:
           terraform_version: ${{ vars.TF_VERSION }}
 
       - name: Terraform init
-        working-directory: infra/environments/${{ inputs.env }}/${{ vars.AWS_REGION }}/${{ inputs.stack }}
+        working-directory: infra/environments/${{ github.ref_name == 'main' && 'prod' || github.ref_name }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
         run: terraform init -input=false
 
       - name: Terraform destroy
-        working-directory: infra/environments/${{ inputs.env }}/${{ vars.AWS_REGION }}/${{ inputs.stack }}
+        working-directory: infra/environments/${{ github.ref_name == 'main' && 'prod' || github.ref_name }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
         env:
           TF_VAR_project: terraform_gitops
-          TF_VAR_environment: ${{ inputs.env }}
+          TF_VAR_environment: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
           TF_VAR_region: ${{ vars.AWS_REGION }}
         run: terraform destroy -input=false -auto-approve

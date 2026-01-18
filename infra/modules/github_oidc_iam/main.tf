@@ -34,6 +34,7 @@ data "aws_iam_policy_document" "github_env_trust" {
   for_each = var.environments
 
   statement {
+    sid     = "GitHubActionsOIDC${upper(each.key)}"
     effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
@@ -42,15 +43,16 @@ data "aws_iam_policy_document" "github_env_trust" {
       identifiers = [local.oidc_provider_arn]
     }
 
+    # aud must be sts.amazonaws.com
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
 
-    # IMPORTANT: tie access to GitHub Environment (not branch)
+    # sub should be environment-based and StringLike (matches your JSON)
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values   = ["repo:${var.repo}:environment:${each.key}"]
     }
