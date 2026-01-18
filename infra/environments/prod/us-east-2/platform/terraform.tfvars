@@ -11,6 +11,6 @@ state_bucket = "REPLACE_WITH_STATE_BUCKET"
 
 
 tags = {
-  Project = "terraform_gitops"
+  project = "terraform_gitops"
   Owner   = "terrence"
 }

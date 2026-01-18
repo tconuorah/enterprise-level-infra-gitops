@@ -6,10 +6,11 @@ node_instance_types = ["t3.medium"]
 desired             = 2
 min                 = 1
 max                 = 3
+project     = "enterprise-level-infra-gitops"
 
 state_bucket = "REPLACE_WITH_STATE_BUCKET"
 
 tags = {
-  Project = "terraform_gitops"
+  project = "terraform_gitops"
   Owner   = "terrence"
 }
