@@ -7,7 +7,7 @@ desired             = 2
 min                 = 1
 max                 = 3
 
-state_bucket = "REPLACE_WITH_STATE_BUCKET"
+state_bucket = "terraform-gitops-file"
 
 
 tags = {
