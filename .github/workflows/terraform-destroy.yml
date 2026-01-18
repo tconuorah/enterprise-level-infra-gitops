@@ -1,0 +1,50 @@
+name: terraform-destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment to destroy"
+        type: choice
+        required: true
+        options: [dev, staging, prod]
+      stack:
+        description: "Stack to destroy"
+        type: choice
+        required: true
+        options: [platform, networking]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ vars.TF_VERSION }}
+
+      - name: Terraform init
+        working-directory: infra/environments/${{ inputs.env }}/${{ vars.AWS_REGION }}/${{ inputs.stack }}
+        run: terraform init -input=false
+
+      - name: Terraform destroy
+        working-directory: infra/environments/${{ inputs.env }}/${{ vars.AWS_REGION }}/${{ inputs.stack }}
+        env:
+          TF_VAR_project: terraform_gitops
+          TF_VAR_environment: ${{ inputs.env }}
+          TF_VAR_region: ${{ vars.AWS_REGION }}
+        run: terraform destroy -input=false -auto-approve
