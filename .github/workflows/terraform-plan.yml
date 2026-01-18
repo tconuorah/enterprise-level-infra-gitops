@@ -13,34 +13,25 @@ permissions:
 
 jobs:
   plan:
-    environment: ${{ matrix.env }}
+    runs-on: ubuntu-latest
+
+    # PR base branch decides environment (dev/staging/main->prod)
+    environment: ${{ github.base_ref == 'main' && 'prod' || github.base_ref }}
+
     strategy:
       fail-fast: false
       matrix:
-        env: [dev, staging, prod]
         stack: [networking, platform]
-    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set env role
-        id: role
-        run: |
-          if [ "${{ matrix.env }}" = "dev" ]; then
-            echo "ROLE_ARN=arn:aws:iam::<ACCOUNT_ID>:role/gitops-terraform-dev" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.env }}" = "staging" ]; then
-            echo "ROLE_ARN=arn:aws:iam::<ACCOUNT_ID>:role/gitops-terraform-staging" >> $GITHUB_OUTPUT
-          else
-            echo "ROLE_ARN=arn:aws:iam::<ACCOUNT_ID>:role/gitops-terraform-prod" >> $GITHUB_OUTPUT
-          fi
-
       - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-           aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -48,17 +39,21 @@ jobs:
           terraform_version: ${{ vars.TF_VERSION }}
 
       - name: Terraform fmt (check)
-        working-directory: infra/environments/${{ matrix.env }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
+        working-directory: infra/environments/${{ github.base_ref == 'main' && 'prod' || github.base_ref }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
         run: terraform fmt -check -recursive
 
       - name: Terraform init
-        working-directory: infra/environments/${{ matrix.env }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
+        working-directory: infra/environments/${{ github.base_ref == 'main' && 'prod' || github.base_ref }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
         run: terraform init -input=false
 
       - name: Terraform validate
-        working-directory: infra/environments/${{ matrix.env }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
+        working-directory: infra/environments/${{ github.base_ref == 'main' && 'prod' || github.base_ref }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
         run: terraform validate
 
       - name: Terraform plan
-        working-directory: infra/environments/${{ matrix.env }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
+        working-directory: infra/environments/${{ github.base_ref == 'main' && 'prod' || github.base_ref }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
+        env:
+          TF_VAR_project: terraform_gitops
+          TF_VAR_environment: ${{ github.base_ref == 'main' && 'prod' || github.base_ref }}
+          TF_VAR_region: ${{ vars.AWS_REGION }}
         run: terraform plan -input=false -no-color
