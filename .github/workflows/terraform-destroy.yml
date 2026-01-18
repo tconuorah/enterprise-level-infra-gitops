@@ -20,6 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        env: [dev, staging, prod]
         stack: [networking, platform]
 
     steps:
