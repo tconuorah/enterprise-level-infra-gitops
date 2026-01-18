@@ -3,21 +3,17 @@ data "aws_caller_identity" "current" {}
 locals {
   oidc_url = "https://token.actions.githubusercontent.com"
 
-  env_subs = {
-    for env, _name in var.role_names :
-    env => (
-      length(try(var.allowed_sub_patterns[env], [])) > 0
-      ? var.allowed_sub_patterns[env]
-      : ["repo:${var.repo}:*"]
-    )
-  }
+  oidc_provider_arn = ( 
+    var.create_oidc_provider
+    ? aws_iam_openid_connect_provider.github[0].arn
+    : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+  )
 
-  oidc_provider_arn = var.create_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
-
+  # Flatten attachments: env -> policy_arn list
   policy_attachments = {
     for item in flatten([
-      for env, arns in var.attach_policy_arns : [
-        for arn in arns : {
+      for env, cfg in var.environments : [
+        for arn in cfg.policy_arns : {
           env = env
           arn = arn
         }
@@ -25,7 +21,6 @@ locals {
     ]) : "${item.env}|${item.arn}" => item
   }
 }
-
 
 resource "aws_iam_openid_connect_provider" "github" {
   count           = var.create_oidc_provider ? 1 : 0
@@ -35,8 +30,8 @@ resource "aws_iam_openid_connect_provider" "github" {
   tags            = var.tags
 }
 
-data "aws_iam_policy_document" "assume" {
-  for_each = var.role_names
+data "aws_iam_policy_document" "github_env_trust" {
+  for_each = var.environments
 
   statement {
     effect  = "Allow"
@@ -53,20 +48,21 @@ data "aws_iam_policy_document" "assume" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # IMPORTANT: tie access to GitHub Environment (not branch)
     condition {
-      test     = "StringLike"
+      test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = local.env_subs[each.key]
+      values   = ["repo:${var.repo}:environment:${each.key}"]
     }
   }
 }
 
 resource "aws_iam_role" "gha" {
-  for_each = var.role_names
+  for_each = var.environments
 
-  name               = each.value
-  assume_role_policy = data.aws_iam_policy_document.assume[each.key].json
-  tags               = merge(var.tags, { Environment = each.key })
+  name               = each.value.role_name
+  assume_role_policy = data.aws_iam_policy_document.github_env_trust[each.key].json
+  tags               = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "attach" {
@@ -75,4 +71,3 @@ resource "aws_iam_role_policy_attachment" "attach" {
   role       = aws_iam_role.gha[each.value.env].name
   policy_arn = each.value.arn
 }
-

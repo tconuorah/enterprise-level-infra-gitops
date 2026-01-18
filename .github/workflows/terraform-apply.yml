@@ -18,8 +18,7 @@ jobs:
       matrix:
         stack: [networking, platform]
 
-    # Map git branch -> environment name
-    environment: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+    environment: ${{ matrix.env }}
 
     steps:
       - name: Checkout
