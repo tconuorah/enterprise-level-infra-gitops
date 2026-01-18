@@ -38,3 +38,7 @@ variable "max" {
 # remote state location for networking
 variable "state_bucket" { type = string }
 
+variable "project" {
+  type        = string
+  description = "Project/application name used for naming and tagging."
+}

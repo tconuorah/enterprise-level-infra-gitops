@@ -22,3 +22,8 @@ variable "public_subnets" {
 variable "private_subnets" {
   type = list(string)
 }
+
+variable "project" {
+  type        = string
+  description = "Project/application name used for naming and tagging."
+}
