@@ -14,3 +14,8 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "lock_table_name" {
+  type  = string
+  default = "terraform-lock"
+}
