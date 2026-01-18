@@ -1,21 +1,24 @@
 module "github_oidc" {
   source = "../../modules/github_oidc_iam"
 
-  repo                 = var.repo
-  create_oidc_provider = true
+  repo = var.repo
 
-  allowed_sub_patterns = {
-    dev     = ["repo:${var.repo}:ref:refs/heads/${var.branch_map.dev}"]
-    staging = ["repo:${var.repo}:ref:refs/heads/${var.branch_map.staging}"]
-    prod    = ["repo:${var.repo}:ref:refs/heads/${var.branch_map.prod}"]
+  environments = {
+    dev = {
+      role_name   = "gitops-terraform-dev"
+      policy_arns = ["arn:aws:iam::aws:policy/AdministratorAccess"]
+    }
+    staging = {
+      role_name   = "gitops-terraform-staging"
+      policy_arns = ["arn:aws:iam::aws:policy/AdministratorAccess"]
+    }
+    prod = {
+      role_name   = "gitops-terraform-prod"
+      policy_arns = ["arn:aws:iam::aws:policy/AdministratorAccess"]
+    }
   }
 
-  # TEMP: start simple. Replace with least-privilege later.
-  attach_policy_arns = {
-    dev     = ["arn:aws:iam::aws:policy/AdministratorAccess"]
-    staging = ["arn:aws:iam::aws:policy/AdministratorAccess"]
-    prod    = ["arn:aws:iam::aws:policy/AdministratorAccess"]
+  tags = {
+    ManagedBy = "terraform"
   }
-
-  tags = var.tags
 }

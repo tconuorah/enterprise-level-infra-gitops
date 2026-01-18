@@ -13,12 +13,4 @@ variable "tags" {
   default = {}
 }
 
-# Strong enterprise default: lock env roles to branches
-variable "branch_map" {
-  type = map(string)
-  default = {
-    dev     = "dev"
-    staging = "staging"
-    prod    = "main"
-  }
-}
+
