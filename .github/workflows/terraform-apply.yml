@@ -13,36 +13,18 @@ permissions:
 jobs:
   apply:
     runs-on: ubuntu-latest
+
+    # Current branch decides environment (dev/staging/main->prod)
+    environment: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+
     strategy:
       fail-fast: false
       matrix:
         stack: [networking, platform]
 
-    environment: ${{ matrix.env }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set environment name
-        id: env
-        run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "ENV=prod" >> $GITHUB_OUTPUT
-          else
-            echo "ENV=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set role ARN
-        id: role
-        run: |
-          if [ "${{ steps.env.outputs.ENV }}" = "dev" ]; then
-            echo "ROLE_ARN=arn:aws:iam::<ACCOUNT_ID>:role/gitops-terraform-dev" >> $GITHUB_OUTPUT
-          elif [ "${{ steps.env.outputs.ENV }}" = "staging" ]; then
-            echo "ROLE_ARN=arn:aws:iam::<ACCOUNT_ID>:role/gitops-terraform-staging" >> $GITHUB_OUTPUT
-          else
-            echo "ROLE_ARN=arn:aws:iam::<ACCOUNT_ID>:role/gitops-terraform-prod" >> $GITHUB_OUTPUT
-          fi
 
       - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -56,9 +38,13 @@ jobs:
           terraform_version: ${{ vars.TF_VERSION }}
 
       - name: Terraform init
-        working-directory: infra/environments/${{ steps.env.outputs.ENV }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
+        working-directory: infra/environments/${{ github.ref_name == 'main' && 'prod' || github.ref_name }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
         run: terraform init -input=false
 
       - name: Terraform apply
-        working-directory: infra/environments/${{ steps.env.outputs.ENV }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
+        working-directory: infra/environments/${{ github.ref_name == 'main' && 'prod' || github.ref_name }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
+        env:
+          TF_VAR_project: terraform_gitops
+          TF_VAR_environment: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+          TF_VAR_region: ${{ vars.AWS_REGION }}
         run: terraform apply -input=false -auto-approve
