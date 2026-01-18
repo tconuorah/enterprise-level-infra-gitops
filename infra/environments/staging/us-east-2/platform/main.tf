@@ -10,13 +10,13 @@ data "terraform_remote_state" "networking" {
 }
 
 module "ecr" {
-  source = "../../../../../../modules/ecr"
+  source = "../../../../modules/ecr"
   name   = "${var.environment}-app"
   tags   = var.tags
 }
 
 module "eks" {
-  source = "../../../../../../modules/eks"
+  source = "../../../../modules/eks"
 
   cluster_name       = var.cluster_name
   kubernetes_version = var.kubernetes_version
