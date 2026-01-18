@@ -8,7 +8,7 @@ min                 = 1
 max                 = 3
 project     = "enterprise-level-infra-gitops"
 
-state_bucket = "REPLACE_WITH_STATE_BUCKET"
+state_bucket = "terraform-gitops-file"
 
 tags = {
   project = "terraform_gitops"
