@@ -1,0 +1,33 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*.tfvars.json
+terraform.tfstate.backup
+*.zip
+cat > .gitignore <<'EOF'
+**/.terraform/
+**/.terraform.lock.hcl
+**/*.tfstate
+**/*.tfstate.*
+crash.log
+*.log
+.DS_Store
+.vscode/
+.idea/
+EOF
+
+
+# Local settings
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# AWS credentials or secrets
+*.pem
+*.key
+secrets.*
