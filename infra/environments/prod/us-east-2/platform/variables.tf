@@ -42,3 +42,7 @@ variable "project" {
   type        = string
   description = "Project/application name used for naming and tagging."
 }
+
+variable "lock_table" {
+  type = string
+}
