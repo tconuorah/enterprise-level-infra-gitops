@@ -2,8 +2,8 @@ environment         = "staging"
 region              = "us-east-2"
 cluster_name        = "staging-eks"
 kubernetes_version  = "1.29"
-node_instance_types = ["t3.medium"]
-desired             = 2
+node_instance_types = ["t3.small"]
+desired             = 1
 min                 = 1
 max                 = 3
 
