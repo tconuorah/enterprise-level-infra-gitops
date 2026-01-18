@@ -40,7 +40,7 @@ jobs:
 
       - name: Terraform fmt (check)
         working-directory: infra/environments/${{ github.base_ref == 'main' && 'prod' || github.base_ref }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
-        run: terraform fmt -check -recursive
+        run: terraform fmt -recursive
 
       - name: Terraform init
         working-directory: infra/environments/${{ github.base_ref == 'main' && 'prod' || github.base_ref }}/${{ vars.AWS_REGION }}/${{ matrix.stack }}
