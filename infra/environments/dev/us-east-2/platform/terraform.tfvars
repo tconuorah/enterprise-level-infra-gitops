@@ -9,6 +9,7 @@ max                 = 3
 project     = "terraform_gitops"
 
 state_bucket = "terraform-gitops-file"
+lock_table   = "terraform-lock"
 
 tags = {
   project = "terraform_gitops"
