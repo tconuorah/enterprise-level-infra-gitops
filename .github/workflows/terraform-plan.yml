@@ -15,9 +15,21 @@ jobs:
   plan:
     runs-on: ubuntu-latest
 
-    # PR base branch decides environment (dev/staging/main->prod)
-    environment: ${{ github.base_ref == 'main' && 'prod' || github.base_ref }}
+     # ✅ REQUIRED so vars.* from GitHub Environments load correctly
+    environment: ${{ github.event_name == 'pull_request'
+      && (github.base_ref == 'main' && 'prod' || github.base_ref)
+      || (github.ref_name == 'main' && 'prod' || github.ref_name) }}
 
+    # ✅ define once, reuse everywhere
+    env:
+      ENV_NAME: ${{ github.event_name == 'pull_request'
+        && (github.base_ref == 'main' && 'prod' || github.base_ref)
+        || (github.ref_name == 'main' && 'prod' || github.ref_name) }}
+
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      TF_VERSION: ${{ vars.TF_VERSION }}
+      
     strategy:
       fail-fast: false
       matrix:
