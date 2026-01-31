@@ -1,7 +1,7 @@
 name: terraform-apply
 
 on:
-  pull_request:
+  push:
     branches: [dev, staging, main]
     paths:
       - "infra/**"
