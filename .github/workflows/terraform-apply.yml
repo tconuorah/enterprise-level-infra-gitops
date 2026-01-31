@@ -23,7 +23,7 @@ jobs:
     env:
       ENV_NAME: ${{ github.event_name == 'pull_request'
         && (github.base_ref == 'main' && 'prod' || github.base_ref)
-        || (github.ref_name == 'main' && 'prod' || github.ref_name) }}
+          || (github.ref_name == 'main' && 'prod' || github.ref_name) }}
 
       AWS_REGION: ${{ vars.AWS_REGION }}
       AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
